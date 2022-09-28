@@ -1,0 +1,36 @@
+name: Minimal setup
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build_adn_benchmark:
+    name: Performance regression check
+    runs-on: ubuntu-latest
+    steps:
+      #- run: git submodule update --init --recursive
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
+      - name: build code
+        run: git submodule update --init --recursive && mkdir build && cd build && cmake .. && make -j4
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v1
+      # Run benchmark with `go test -bench` and stores the output to a file
+      - name: Run benchmark
+        run: ./benchmark_test --benchmark_format=json | tee benchmark_result.json
+      # Download previous benchmark result from cache (if exists)
+      - name: Download previous benchmark data
+        uses: actions/cache@v1
+        with:
+          path: ./cache
+          key: ${{ runner.os }}-benchmark
+      # Run `github-action-benchmark` action
+      - name: Store benchmark result
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          tool: 'googlecpp'
+          output-file-path: benchmark_result.json
+      # Upload the updated cache file for the next job by actions/cache 
