@@ -18,22 +18,20 @@ jobs:
         run: git submodule update --init --recursive
       - name: build code
         id: build_code
-        run:  git submodule update --init --recursive && mkdir build && cd build && cmake .. && make -j4 && echo "FOO=$(./benchmark_test)" >> $GITHUB_ENV
-      # - name: launch bench  
-      #   run: echo "FOO=$(./benchmark_test)" >> $GITHUB_ENV 
-        #DATA_OUTPUT="$(./benchmark_test)" && echo "{delta_code}={$DATA_OUTPUT}" >> $GITHUB_OUTPUT"
-        #$(echo -e "### Hello world! :rocket:" >> $GITHUB_STEP_SUMMARY)
-        #echo -e "$(./benchmark_test)" >> $GITHUB_STEP_SUMMARY
+        run:  git submodule update --init --recursive && mkdir build && cd build && cmake .. && make -j4
+      - name: test benchmark
+        id: diff_rev
+        shell: bash
+        run:  echo "BENCHMARK<<EOF" >> $GITHUB_OUTPUT && ./build/benchmark_test --benchmark_format=console >> $GITHUB_OUTPUT && echo "EOF" >> $GITHUB_OUTPUT
       - name: Auto Comment
         uses: bubkoo/auto-comment@v1
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          pullRequestOpened: >
-            👋 @{{ author }}            
-            This is the benchmark result on AGX Xavier :rocket::
+          pullRequestSynchronize: >
+            :rocket:This is the benchmark result on AGX Xavier:
             
             ```
             
-            ${{ env.FOO }}
+            ${{ steps.diff_rev.outputs.BENCHMARK }}
             
             ```     
