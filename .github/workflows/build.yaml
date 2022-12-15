@@ -16,16 +16,24 @@ jobs:
         uses: actions/checkout@v2
       - name: Checkout submodules
         run: git submodule update --init --recursive
-      - name: build_code
-        id: build_step
-        run: git submodule update --init --recursive && mkdir build && cd build && cmake .. && make -j4 && \
-        $(echo -e "### Hello world! :rocket:" >> $GITHUB_STEP_SUMMARY)
+      - name: build code
+        id: build_code
+        run:  git submodule update --init --recursive && mkdir build && cd build && cmake .. && make -j4
+      - name: launch bench  
+        run: echo "FOO=$(./benchmark_test)" >> $GITHUB_ENV 
+        #DATA_OUTPUT="$(./benchmark_test)" && echo "{delta_code}={$DATA_OUTPUT}" >> $GITHUB_OUTPUT"
+        #$(echo -e "### Hello world! :rocket:" >> $GITHUB_STEP_SUMMARY)
         #echo -e "$(./benchmark_test)" >> $GITHUB_STEP_SUMMARY
-      - name: Createcomment
-        uses: peter-evans/create-or-update-comment@v2
-        id: couc
+      - name: Auto Comment
+        uses: bubkoo/auto-comment@v1
         with:
-          issue-number: ${{ github.event.number }}
-          body: |
-            ${{ steps.build_adn_benchmark.outputs.GITHUB_STEP_SUMMARY }}
-     
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          pullRequestOpened: >
+            👋 @{{ author }}            
+            This is the benchmark result on AGX Xavier :rocket::
+            
+            ```
+            
+            $(./benchmark_test)
+            
+            ```     
