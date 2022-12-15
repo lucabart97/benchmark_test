@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - main
+  pull_request:
+  workflow_dispatch:
 
 jobs:
   build_adn_benchmark:
@@ -14,19 +16,16 @@ jobs:
         uses: actions/checkout@v2
       - name: Checkout submodules
         run: git submodule update --init --recursive
-      - name: build code
-        run: git submodule update --init --recursive && mkdir build && cd build && cmake .. && make -j4 && ./benchmark_test --benchmark_format=json | tee benchmark_result.json
-      - name: Download previous benchmark data
-        uses: actions/cache@v1
+      - name: build_code
+        id: build_step
+        run: git submodule update --init --recursive && mkdir build && cd build && cmake .. && make -j4 && \
+        $(echo -e "### Hello world! :rocket:" >> $GITHUB_STEP_SUMMARY)
+        #echo -e "$(./benchmark_test)" >> $GITHUB_STEP_SUMMARY
+      - name: Createcomment
+        uses: peter-evans/create-or-update-comment@v2
+        id: couc
         with:
-          path: ./cache
-          key: ${{ runner.os }}-benchmark
-      - name: try ls
-        run: ls
-      # Run `github-action-benchmark` action
-      - name: Store benchmark result
-        uses: benchmark-action/github-action-benchmark@v1
-        with:
-          tool: 'googlecpp'
-          output-file-path: build/benchmark_result.json
-      # Upload the updated cache file for the next job by actions/cache 
+          issue-number: ${{ github.event.number }}
+          body: |
+            ${{ steps.build_adn_benchmark.outputs.GITHUB_STEP_SUMMARY }}
+     
